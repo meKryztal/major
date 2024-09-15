@@ -24,7 +24,7 @@ class PixelTod:
     def __init__(self):
         self.scraper = cloudscraper.create_scraper()
         self.DEFAULT_COUNTDOWN = (8 * 3600) + (5 * 60)  # Интервал между повтором скрипта, 8 часов 5 минут дефолт
-        self.INTERVAL_DELAY = 3  # Интервал между каждым аккаунтом, 3 секунды дефолт
+        self.INTERVAL_DELAY = 10  # Интервал между каждым аккаунтом, 3 секунды дефолт
         self.base_headers = {
             "Accept": "application/json, text/plain, */*",
             "Origin": "https://major.glados.app",
@@ -59,17 +59,18 @@ class PixelTod:
                 username = user.get('username')
                 self.log(f'{Fore.LIGHTYELLOW_EX}Аккаунт: {Fore.LIGHTWHITE_EX}{username} ')
 
-                url = "https://major.glados.app/api/auth/tg/"
+                url = "https://major.bot/api/auth/tg/"
                 payload = {"init_data": data}
                 headers = self.base_headers.copy()
                 res = self.api_call(url, headers=headers, data=json.dumps(payload), method='POST')
                 response_json = res.json()
                 token = response_json["access_token"]
-
+                squad_id = response_json["user"]["squad_id"]
+                if squad_id is None:
+                    headers = self.base_headers.copy()
+                    headers["Authorization"] = f"Bearer {token}"
+                    self.api_call("https://major.bot/api/squads/1943111151/join/?", headers=headers, method='POST')
                 new_data = Data(token, username)
-
-
-
                 self.process_account(new_data)
                 print('-' * 50)
                 self.countdown(self.INTERVAL_DELAY)
@@ -80,6 +81,11 @@ class PixelTod:
         self.process_check_in(data)
         self.process_hold_coin(data)
         self.process_spin(data)
+        self.process_swipe(data)
+        self.durov(data)
+        self.task_daily(data)
+        self.task_all(data)
+
     def countdown(self, t):
         while t:
             one, two = divmod(t, 3600)
@@ -108,8 +114,9 @@ class PixelTod:
                 self.log(f'{Fore.LIGHTRED_EX}Ошибка подключения соединения!')
                 continue
 
+
     def streak(self, data: Data):
-        url = "https://major.glados.app/api/user-visits/streak/"
+        url = "https://major.bot/api/user-visits/streak/"
 
         try:
             headers = self.base_headers.copy()
@@ -126,7 +133,7 @@ class PixelTod:
             return None
 
     def balance(self, tele_id, data: Data):
-        url = f"https://major.glados.app/api/users/{tele_id}/"
+        url = f"https://major.bot/api/users/{tele_id}/"
 
         try:
             headers = self.base_headers.copy()
@@ -150,7 +157,7 @@ class PixelTod:
 
 
     def check_in(self, data: Data):
-        url = f"https://major.glados.app/api/user-visits/visit/"
+        url = f"https://major.bot/api/user-visits/visit/"
 
         try:
             headers = self.base_headers.copy()
@@ -174,7 +181,7 @@ class PixelTod:
 
 
     def hold_coin(self, data: Data, coins):
-        url = "https://major.glados.app/api/bonuses/coins/"
+        url = "https://major.bot/api/bonuses/coins/"
         payload = {"coins": coins}
 
         try:
@@ -189,7 +196,7 @@ class PixelTod:
             return None
 
     def spin(self, data: Data):
-        url = "https://major.glados.app/api/roulette"
+        url = "https://major.bot/api/roulette/"
 
         try:
             headers = self.base_headers.copy()
@@ -206,7 +213,7 @@ class PixelTod:
         coins = random.randint(800, 900)
         hold_coin_status = self.hold_coin(data, coins=coins)
         if hold_coin_status:
-            self.log(f"{Fore.LIGHTYELLOW_EX}Hold Coin: {Fore.LIGHTWHITE_EX}Выполнил +{coins}")
+            self.log(f"{Fore.LIGHTYELLOW_EX}Hold Coin: {Fore.LIGHTWHITE_EX}Выполнил {Fore.LIGHTWHITE_EX}+{coins}")
         else:
             self.log(
                 f"{Fore.LIGHTYELLOW_EX}Hold Coin: {Fore.LIGHTRED_EX}Еще не пришло время"
@@ -215,11 +222,108 @@ class PixelTod:
     def process_spin(self, data: Data):
         point = self.spin(data)
         if point:
-            self.log(f"{Fore.LIGHTYELLOW_EX}Барабан: {Fore.LIGHTWHITE_EX}Выполнил +{point:}")
+            self.log(f"{Fore.LIGHTYELLOW_EX}Roulette: {Fore.LIGHTWHITE_EX}Выполнил {Fore.LIGHTWHITE_EX}+{point:}")
         else:
             self.log(
-                f"{Fore.LIGHTYELLOW_EX}Барабан: {Fore.LIGHTRED_EX}Еще не пришло время"
+                f"{Fore.LIGHTYELLOW_EX}Roulette: {Fore.LIGHTRED_EX}Еще не пришло время"
             )
+
+    def swipe_coin(self, data: Data, coins):
+        url = "https://major.bot/api/swipe_coin/"
+        payload = {"coins": coins}
+
+        try:
+            headers = self.base_headers.copy()
+            headers["Authorization"] = f"Bearer {data.token}"
+            res = self.api_call(url, headers=headers, data=json.dumps(payload), method='POST')
+            dat = res.json()
+            status = dat["success"]
+
+            return status
+        except:
+            return None
+
+    def process_swipe(self, data: Data):
+        coins = random.randint(2000, 3000)
+        swipe_coin_status = self.swipe_coin(data, coins=coins)
+        if swipe_coin_status:
+            self.log(f"{Fore.LIGHTYELLOW_EX}Swipe Coin: {Fore.LIGHTWHITE_EX}Выполнил {Fore.LIGHTWHITE_EX}+{coins}")
+        else:
+            self.log(
+                f"{Fore.LIGHTYELLOW_EX}Swipe Coin: {Fore.LIGHTRED_EX}Еще не пришло время"
+            )
+
+    def durov(self, data: Data):
+        url = "https://raw.githubusercontent.com/GravelFire/TWFqb3JCb3RQdXp6bGVEdXJvdg/master/answer.py"
+        headers = self.base_headers.copy()
+        headers["Authorization"] = f"Bearer {data.token}"
+        res = self.api_call(url)
+
+        status = res.status_code
+        if status == 200:
+            response_answer = json.loads(res.text)
+            if response_answer.get('expires', 0) > int(time.time()):
+                answer = response_answer.get('answer')
+                urld = "https://major.bot/api/durov/"
+                start = self.api_call(urld, headers=headers)
+
+                if start:
+                    time.sleep(3)
+                    resd = self.api_call(urld, headers=headers, data=json.dumps(answer), method='POST')
+                    statusd = resd.status_code
+                    if statusd == 200 or statusd == 201:
+                        self.log(f"{Fore.LIGHTYELLOW_EX}Puzzle Durov: {Fore.LIGHTWHITE_EX}Выполнил {Fore.LIGHTWHITE_EX}+5000")
+            return None
+
+    def do_task(self, data: Data, task_id):
+        url = "https://major.bot/api/tasks/"
+        try:
+            headers = self.base_headers.copy()
+            headers["Authorization"] = f"Bearer {data.token}"
+            res = self.api_call(url, headers=headers, data=json.dumps({"task_id": task_id}), method='POST')
+            dat = res.json()
+            status = dat["is_completed"]
+
+            return status
+        except:
+            return None
+
+
+    def task_daily(self, data: Data):
+        self.log(f"{Fore.LIGHTYELLOW_EX}Проверяю задания")
+        url = "https://major.bot/api/tasks/?is_daily=true"
+        headers = self.base_headers.copy()
+        headers["Authorization"] = f"Bearer {data.token}"
+        res = self.api_call(url, headers=headers)
+
+        for daily in reversed(res.json()):
+            id = daily.get('id')
+            title = daily.get('title')
+            award = daily.get('award')
+            time.sleep(3)
+            data_done = self.do_task(data, task_id=id)
+            time.sleep(5)
+
+            if data_done :
+                self.log(f"{Fore.LIGHTYELLOW_EX}Daily Task : {Fore.LIGHTWHITE_EX}{title} {Fore.LIGHTYELLOW_EX}Награда : {Fore.LIGHTWHITE_EX}{award}")
+
+    def task_all(self, data: Data):
+        url = "https://major.bot/api/tasks/?is_daily=false"
+        headers = self.base_headers.copy()
+        headers["Authorization"] = f"Bearer {data.token}"
+        res = self.api_call(url, headers=headers)
+
+        for task in res.json():
+            id = task.get('id')
+            title = task.get('title')
+            award = task.get('award')
+            if task.get('type') != 'subscribe_channel':
+                time.sleep(3)
+                data_done = self.do_task(data, task_id=id)
+                time.sleep(5)
+
+                if data_done:
+                    self.log(f"{Fore.LIGHTYELLOW_EX}Task : {Fore.LIGHTWHITE_EX}{title} {Fore.LIGHTYELLOW_EX}Награда : {Fore.LIGHTWHITE_EX}{award}")
 
     def log(self, message):
         now = datetime.now().isoformat(" ").split(".")[0]
