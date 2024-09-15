@@ -117,7 +117,7 @@ class PixelTod:
 
     def streak(self, data: Data):
         url = "https://major.bot/api/user-visits/streak/"
-
+        time.sleep(3)
         try:
             headers = self.base_headers.copy()
             headers["Authorization"] = f"Bearer {data.token}"
@@ -134,7 +134,7 @@ class PixelTod:
 
     def balance(self, tele_id, data: Data):
         url = f"https://major.bot/api/users/{tele_id}/"
-
+        time.sleep(3)
         try:
             headers = self.base_headers.copy()
             headers["Authorization"] = f"Bearer {data.token}"
@@ -158,7 +158,7 @@ class PixelTod:
 
     def check_in(self, data: Data):
         url = f"https://major.bot/api/user-visits/visit/"
-
+        time.sleep(3)
         try:
             headers = self.base_headers.copy()
             headers["Authorization"] = f"Bearer {data.token}"
@@ -183,7 +183,7 @@ class PixelTod:
     def hold_coin(self, data: Data, coins):
         url = "https://major.bot/api/bonuses/coins/"
         payload = {"coins": coins}
-
+        time.sleep(3)
         try:
             headers = self.base_headers.copy()
             headers["Authorization"] = f"Bearer {data.token}"
@@ -197,7 +197,7 @@ class PixelTod:
 
     def spin(self, data: Data):
         url = "https://major.bot/api/roulette/"
-
+        time.sleep(3)
         try:
             headers = self.base_headers.copy()
             headers["Authorization"] = f"Bearer {data.token}"
@@ -231,7 +231,7 @@ class PixelTod:
     def swipe_coin(self, data: Data, coins):
         url = "https://major.bot/api/swipe_coin/"
         payload = {"coins": coins}
-
+        time.sleep(3)
         try:
             headers = self.base_headers.copy()
             headers["Authorization"] = f"Bearer {data.token}"
@@ -257,6 +257,7 @@ class PixelTod:
         url = "https://raw.githubusercontent.com/GravelFire/TWFqb3JCb3RQdXp6bGVEdXJvdg/master/answer.py"
         headers = self.base_headers.copy()
         headers["Authorization"] = f"Bearer {data.token}"
+        time.sleep(3)
         res = self.api_call(url)
 
         status = res.status_code
@@ -278,6 +279,7 @@ class PixelTod:
     def do_task(self, data: Data, task_id):
         url = "https://major.bot/api/tasks/"
         try:
+            time.sleep(3)
             headers = self.base_headers.copy()
             headers["Authorization"] = f"Bearer {data.token}"
             res = self.api_call(url, headers=headers, data=json.dumps({"task_id": task_id}), method='POST')
