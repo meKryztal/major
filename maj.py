@@ -35,16 +35,15 @@ class PixelTod:
             'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.6422.165 Mobile Safari/537.36',
         }
 
-
-
-
-
     def data_parsing(self, data):
         return {key: value for key, value in (i.split('=') for i in unquote(data).split('&'))}
 
     def main(self):
         with open("initdata.txt", "r") as file:
             datas = file.read().splitlines()
+
+        with open("proxies.txt", "r") as file:
+            proxies = file.read().splitlines()
 
         self.log(f'{Fore.LIGHTYELLOW_EX}Обнаружено аккаунтов: {len(datas)}')
         if not datas:
@@ -62,6 +61,15 @@ class PixelTod:
                 url = "https://major.bot/api/auth/tg/"
                 payload = {"init_data": data}
                 headers = self.base_headers.copy()
+                proxy = proxies[no % len(proxies)] if proxies else None
+                if proxy:
+                    if len(proxies) != len(datas):
+                        raise ValueError("Количество прокси и ключей не совпадает")
+                    self.scraper.proxies = {
+                        "http": proxy,
+                        "https": proxy,
+                    }
+                    self.log(f"{Fore.LIGHTYELLOW_EX}Используется прокси: {proxy}")
                 res = self.api_call(url, headers=headers, data=json.dumps(payload), method='POST')
                 response_json = res.json()
                 token = response_json["access_token"]
@@ -108,7 +116,7 @@ class PixelTod:
                 if res.status_code == 401:
                     self.log(f'{Fore.LIGHTRED_EX}{res.text}')
 
-                open('.http.log', 'a', encoding='utf-8').write(f'{res.text}\n')
+
                 return res
             except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, requests.exceptions.Timeout):
                 self.log(f'{Fore.LIGHTRED_EX}Ошибка подключения соединения!')
