@@ -118,7 +118,7 @@ class PixelTod:
 
 
                 return res
-            except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, requests.exceptions.Timeout):
+            except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, requests.exceptions.Timeout, requests.exceptions.JSONDecoderError, requests.exceptions.ChunkedEncodingError):
                 self.log(f'{Fore.LIGHTRED_EX}Ошибка подключения соединения!')
                 continue
 
