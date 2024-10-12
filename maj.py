@@ -118,7 +118,7 @@ class PixelTod:
 
 
                 return res
-            except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, requests.exceptions.Timeout, requests.exceptions.JSONDecoderError, requests.exceptions.ChunkedEncodingError):
+            except (requests.exceptions.ConnectionError, requests.exceptions.ConnectTimeout, requests.exceptions.ReadTimeout, requests.exceptions.Timeout):
                 self.log(f'{Fore.LIGHTRED_EX}Ошибка подключения соединения!')
                 continue
 
@@ -297,7 +297,19 @@ class PixelTod:
             return status
         except:
             return None
+    def do_task_answ(self, data: Data, payload):
+        url = "https://major.bot/api/tasks/"
+        try:
+            time.sleep(3)
+            headers = self.base_headers.copy()
+            headers["Authorization"] = f"Bearer {data.token}"
+            res = self.api_call(url, headers=headers, data=json.dumps(payload), method='POST')
+            dat = res.json()
+            status = dat["is_completed"]
 
+            return status
+        except:
+            return None
 
     def task_daily(self, data: Data):
         self.log(f"{Fore.LIGHTYELLOW_EX}Проверяю задания")
@@ -310,12 +322,14 @@ class PixelTod:
             id = daily.get('id')
             title = daily.get('title')
             award = daily.get('award')
-            time.sleep(3)
-            data_done = self.do_task(data, task_id=id)
-            time.sleep(5)
 
-            if data_done :
-                self.log(f"{Fore.LIGHTYELLOW_EX}Daily Task : {Fore.LIGHTWHITE_EX}{title} {Fore.LIGHTYELLOW_EX}Награда : {Fore.LIGHTWHITE_EX}{award}")
+            if not daily['is_completed']:
+
+                data_done = self.do_task(data, task_id=id)
+                time.sleep(3)
+
+                if data_done :
+                    self.log(f"{Fore.LIGHTYELLOW_EX}Daily Task : {Fore.LIGHTWHITE_EX}{title} {Fore.LIGHTYELLOW_EX}Награда : {Fore.LIGHTWHITE_EX}{award}")
 
     def task_all(self, data: Data):
         url = "https://major.bot/api/tasks/?is_daily=false"
@@ -324,16 +338,35 @@ class PixelTod:
         res = self.api_call(url, headers=headers)
 
         for task in res.json():
+            
             id = task.get('id')
             title = task.get('title')
             award = task.get('award')
-            if task.get('type') != 'subscribe_channel':
-                time.sleep(3)
-                data_done = self.do_task(data, task_id=id)
-                time.sleep(5)
+            if not task['is_completed']:
+                if task.get('type') != 'subscribe_channel':
 
-                if data_done:
-                    self.log(f"{Fore.LIGHTYELLOW_EX}Task : {Fore.LIGHTWHITE_EX}{title} {Fore.LIGHTYELLOW_EX}Награда : {Fore.LIGHTWHITE_EX}{award}")
+                    data_done = self.do_task(data, task_id=id)
+                    time.sleep(3)
+
+                    if data_done:
+                        self.log(f"{Fore.LIGHTYELLOW_EX}Task : {Fore.LIGHTWHITE_EX}{title} {Fore.LIGHTYELLOW_EX}Награда : {Fore.LIGHTWHITE_EX}{award}")
+
+                if task.get('type') == 'code':
+                    answers = {
+                        "Watch YouTube Video #1": "070624",
+                        "Major Games #1": "070624",
+                        "Watch YouTube Shorts #3": "070624",
+                        "Watch YouTube Shorts #4": "159390",
+                        "Watch YouTube Shorts #6": "241086"
+                        }
+                    answer = answers[title]
+                    payload = {'task_id': id, 'payload': {'code': answer}}
+                    data_done = self.do_task_answ(data, payload=payload)
+                    time.sleep(3)
+
+                    if data_done:
+                        self.log(
+                            f"{Fore.LIGHTYELLOW_EX}Task : {Fore.LIGHTWHITE_EX}{title} {Fore.LIGHTYELLOW_EX}Награда : {Fore.LIGHTWHITE_EX}{award}")
 
     def log(self, message):
         now = datetime.now().isoformat(" ").split(".")[0]
