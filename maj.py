@@ -2,7 +2,7 @@ import sys
 import json
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from colorama import init, Fore, Style
 from urllib.parse import unquote
 import cloudscraper
@@ -262,7 +262,7 @@ class PixelTod:
             )
 
     def durov(self, data: Data):
-        url = "https://raw.githubusercontent.com/GravelFire/TWFqb3JCb3RQdXp6bGVEdXJvdg/master/answer.py"
+        url = "https://akasakaid.github.io/major/durov.json"
         headers = self.base_headers.copy()
         headers["Authorization"] = f"Bearer {data.token}"
         time.sleep(3)
@@ -270,19 +270,18 @@ class PixelTod:
 
         status = res.status_code
         if status == 200:
-            response_answer = json.loads(res.text)
-            if response_answer.get('expires', 0) > int(time.time()):
-                answer = response_answer.get('answer')
-                urld = "https://major.bot/api/durov/"
-                start = self.api_call(urld, headers=headers)
+            tday = datetime.now(tz=timezone.utc).isoformat().split("T")[0]
+            answer = res.json().get(tday)
+            urld = "https://major.bot/api/durov/"
+            start = self.api_call(urld, headers=headers)
 
-                if start:
-                    time.sleep(3)
-                    resd = self.api_call(urld, headers=headers, data=json.dumps(answer), method='POST')
-                    statusd = resd.status_code
-                    if statusd == 200 or statusd == 201:
-                        self.log(f"{Fore.LIGHTYELLOW_EX}Puzzle Durov: {Fore.LIGHTWHITE_EX}Выполнил {Fore.LIGHTWHITE_EX}+5000")
-            return None
+            if start:
+                time.sleep(3)
+                resd = self.api_call(urld, headers=headers, data=json.dumps(answer), method='POST')
+                statusd = resd.status_code
+                if statusd == 200 or statusd == 201:
+                    self.log(f"{Fore.LIGHTYELLOW_EX}Puzzle Durov: {Fore.LIGHTWHITE_EX}Выполнил {Fore.LIGHTWHITE_EX}+5000")
+        return None
 
     def do_task(self, data: Data, task_id):
         url = "https://major.bot/api/tasks/"
@@ -338,7 +337,7 @@ class PixelTod:
         res = self.api_call(url, headers=headers)
 
         for task in res.json():
-            
+
             id = task.get('id')
             title = task.get('title')
             award = task.get('award')
